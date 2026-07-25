@@ -1,0 +1,80 @@
+# Example stack for a containerized app + its own Postgres/Redis,
+# fronted by the host Nginx (see config/nginx/reverse-proxy.conf.template,
+# rendered as /etc/nginx/sites-available/app.conf by scripts/12-nginx-certbot.sh).
+#
+# Copy this into ~/docker/<project>/docker-compose.yml, adjust the image/
+# build context, and `cp .env.example .env` alongside it.
+#
+# Publishing "127.0.0.1:PORT:PORT" (not "PORT:PORT") is deliberate: only
+# Nginx on the same host can reach these containers directly, so app/db
+# ports are never exposed to the internet — UFW only opens 22/80/443.
+name: app
+
+services:
+  web:
+    build: .
+    # `image:` lets CI deploy a prebuilt tag via `docker compose pull` without
+    # a local build context (see examples/github-actions/deploy.yml); local
+    # dev without IMAGE set falls back to `docker compose up --build`.
+    image: ${IMAGE:-app:local}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+volumes:
+  db-data:
+  redis-data:

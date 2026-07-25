@@ -1,0 +1,6 @@
+.env
+docker/.env
+*.log
+*.bak
+*.tar.gz
+.DS_Store

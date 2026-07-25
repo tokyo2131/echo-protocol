@@ -1,0 +1,13 @@
+# Managed by echo-protocol scripts/16-automation-cron.sh
+# __ADMIN_USER__ is substituted with the real admin username at install time.
+[Unit]
+Description=echo-protocol weekly maintenance (updates + cleanup)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/__ADMIN_USER__/scripts/automation/system-update.sh
+ExecStart=/home/__ADMIN_USER__/scripts/automation/system-cleanup.sh
+ExecStart=/home/__ADMIN_USER__/scripts/automation/docker-cleanup.sh
+Nice=15

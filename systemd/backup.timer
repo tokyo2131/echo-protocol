@@ -1,0 +1,13 @@
+# Managed by echo-protocol scripts/16-automation-cron.sh
+[Unit]
+Description=Run echo-protocol backup daily
+
+[Timer]
+# 03:00 server time, +/- up to 10 minutes of jitter to avoid every
+# droplet in a fleet hitting disk/network at exactly the same instant.
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

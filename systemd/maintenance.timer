@@ -1,0 +1,11 @@
+# Managed by echo-protocol scripts/16-automation-cron.sh
+[Unit]
+Description=Run echo-protocol weekly maintenance
+
+[Timer]
+OnCalendar=Sun *-*-* 04:30:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

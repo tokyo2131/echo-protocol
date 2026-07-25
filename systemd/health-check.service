@@ -1,0 +1,9 @@
+# Managed by echo-protocol scripts/16-automation-cron.sh
+# __ADMIN_USER__ is substituted with the real admin username at install time.
+[Unit]
+Description=echo-protocol health check
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/__ADMIN_USER__/scripts/automation/health-check.sh

@@ -1,0 +1,24 @@
+# Managed by echo-protocol scripts/14-monitoring-logging.sh
+# Installed as /etc/logrotate.d/echo-protocol
+# Covers provisioning/automation logs; app-specific logs should ship
+# their own logrotate.d entry (Nginx and Docker already rotate their own).
+
+/var/log/echo-protocol/*.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+}
+
+/home/*/logs/*.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    su root adm
+}
