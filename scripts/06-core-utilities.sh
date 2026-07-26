@@ -8,6 +8,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/lib/common.sh"
 require_root
+detect_arch
+log "Architecture: ${DPKG_ARCH} (Rust target: ${RUST_TARGET_ARCH}, fastfetch: ${FASTFETCH_ARCH})"
 
 step "Install apt-packaged utilities"
 apt_update
@@ -52,13 +54,13 @@ install_github_release() {
 }
 
 step "Install eza (modern ls replacement) from upstream release"
-install_github_release "eza-community/eza" "eza_x86_64-unknown-linux-gnu\\.tar\\.gz$" "eza"
+install_github_release "eza-community/eza" "eza_${RUST_TARGET_ARCH}-unknown-linux-gnu\\.tar\\.gz$" "eza"
 
 step "Install zoxide (smarter cd) from upstream release"
-install_github_release "ajeetdsouza/zoxide" "zoxide-.*-x86_64-unknown-linux-musl\\.tar\\.gz$" "zoxide"
+install_github_release "ajeetdsouza/zoxide" "zoxide-.*-${RUST_TARGET_ARCH}-unknown-linux-musl\\.tar\\.gz$" "zoxide"
 
 step "Install fastfetch (system info banner) from upstream release"
-install_github_release "fastfetch-cli/fastfetch" "fastfetch-linux-amd64\\.tar\\.gz$" "fastfetch"
+install_github_release "fastfetch-cli/fastfetch" "fastfetch-linux-${FASTFETCH_ARCH}\\.tar\\.gz$" "fastfetch"
 
 step "Enable zoxide and useful aliases for interactive shells"
 cat >/etc/profile.d/echo-protocol-aliases.sh <<'EOF'

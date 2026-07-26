@@ -18,6 +18,9 @@ echo-protocol/
 ├── systemd/                   Unit files installed by scripts/16-*.sh
 ├── docker/                    Example docker-compose stack for app projects
 ├── examples/github-actions/   Example CI/CD workflow for another repo
+├── cloud/oracle/              Optional: Oracle Cloud Always Free instance
+│                               creation (retries on capacity errors) —
+│                               only needed if you don't have a server yet
 └── docs/                      This documentation set
 ```
 

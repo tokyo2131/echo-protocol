@@ -29,6 +29,14 @@ exact versions/flags — this is the map, not the source of truth.
 grep -rhoE 'apt_install [a-z0-9.-]+( [a-z0-9.-]+)*' scripts/ | sort -u
 ```
 
+## Architecture support
+
+Every stage runs unmodified on amd64 (x86_64) or arm64 (aarch64) —
+`scripts/lib/common.sh`'s `detect_arch` resolves the right upstream
+release asset for eza/zoxide/fastfetch (stage 06) and Go (stage 09);
+apt packages are multi-arch already. See `docs/ORACLE-FREE-TIER.md` for
+running on Oracle Cloud's free arm64 (Ampere A1) tier.
+
 ## Version policy
 
 - Packages from Debian's apt repos track whatever Bookworm/

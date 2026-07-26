@@ -12,10 +12,16 @@ development.
 
 | | |
 |---|---|
-| OS | Debian 12 (Bookworm), x86_64 |
-| Sizing assumed by tuning defaults | 4 vCPU / 8 GB RAM / 100 GB NVMe |
+| OS | Debian 12 (Bookworm), amd64 (x86_64) or arm64 (aarch64) |
+| Sizing assumed by tuning defaults | 4 vCPU / 8 GB RAM / 100 GB NVMe (or larger — e.g. Oracle Cloud's Always Free Ampere A1 offers up to 4 OCPU/24GB/200GB free; see `docs/ORACLE-FREE-TIER.md`) |
 | Network | Public static IPv4, IPv6 enabled |
 | Exposed ports | 22 (SSH), 80 (HTTP), 443 (HTTPS) — everything else denied by UFW |
+
+Architecture is auto-detected (`scripts/lib/common.sh`'s `detect_arch`)
+— stages that fetch prebuilt binaries from upstream GitHub releases
+(eza/zoxide/fastfetch in stage 06, Go in stage 09) resolve the correct
+amd64/arm64 asset at install time rather than hardcoding one. Every
+apt-installed package already ships both architectures upstream.
 
 ## Layered design
 

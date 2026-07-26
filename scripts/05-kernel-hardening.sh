@@ -30,10 +30,10 @@ if ! grep -q "^${SWAP_FILE} " /etc/fstab 2>/dev/null; then
   echo "${SWAP_FILE} none swap sw 0 0" >> /etc/fstab
 fi
 
-step "Set I/O scheduler hint for NVMe (none/mq-deadline are appropriate; NVMe defaults to 'none' already)"
-for dev in /sys/block/nvme*n1/queue/scheduler /sys/block/sda/queue/scheduler; do
+step "Report I/O scheduler per block device (informational — NVMe/virtio defaults of 'none' or 'mq-deadline' are already appropriate; covers local NVMe, and the sd*/vd* naming cloud providers use for network-attached block storage, e.g. Oracle Cloud volumes)"
+for dev in /sys/block/nvme*n1/queue/scheduler /sys/block/sd*/queue/scheduler /sys/block/vd*/queue/scheduler /sys/block/xvd*/queue/scheduler; do
   [[ -e "$dev" ]] || continue
-  log "Scheduler for $(dirname "$(dirname "$dev")"): $(cat "$dev")"
+  log "Scheduler for $(basename "$(dirname "$(dirname "$dev")")"): $(cat "$dev")"
 done
 
 mark_done "05-kernel-hardening"

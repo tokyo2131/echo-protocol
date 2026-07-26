@@ -67,6 +67,23 @@ pkg_installed() {
   dpkg -s "$1" &>/dev/null
 }
 
+# --- architecture helpers ------------------------------------------------
+# This repo targets amd64 (x86_64) and arm64 (e.g. Oracle Cloud's Ampere A1
+# "Always Free" shape) — apt packages are multi-arch already, but a few
+# stages fetch prebuilt binaries straight from upstream GitHub releases,
+# which name their assets per-arch differently. Stages that do so should
+# set these once near the top and use them in asset_pattern/URLs instead
+# of hardcoding an architecture.
+detect_arch() {
+  DPKG_ARCH=$(dpkg --print-architecture)   # "amd64" | "arm64"
+  case "$DPKG_ARCH" in
+    amd64) RUST_TARGET_ARCH="x86_64";  GO_ARCH="amd64"; FASTFETCH_ARCH="amd64" ;;
+    arm64) RUST_TARGET_ARCH="aarch64"; GO_ARCH="arm64"; FASTFETCH_ARCH="aarch64" ;;
+    *) die "Unsupported architecture '${DPKG_ARCH}' — this repo supports amd64 and arm64 only." ;;
+  esac
+  export DPKG_ARCH RUST_TARGET_ARCH GO_ARCH FASTFETCH_ARCH
+}
+
 # --- misc --------------------------------------------------------------
 confirm_or_die() {
   # Used by destructive automation scripts (restore.sh) when run interactively.

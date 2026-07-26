@@ -91,6 +91,15 @@ Full detail lives in `docs/ARCHITECTURE.md` and `docs/DIRECTORY-STRUCTURE.md`
   (`docker/docker-compose.example.yml`), not the host-level instances —
   don't assume an app should connect to the host Postgres unless that's
   explicitly what's being built.
+- **Architecture**: every stage runs on amd64 or arm64. Stages that fetch
+  prebuilt binaries from upstream GitHub releases instead of apt
+  (`scripts/06-core-utilities.sh` for eza/zoxide/fastfetch,
+  `scripts/09-go-rust-java.sh` for Go) must call `detect_arch`
+  (`scripts/lib/common.sh`) and use `$RUST_TARGET_ARCH`/`$GO_ARCH`/
+  `$FASTFETCH_ARCH`/`$DPKG_ARCH` in the asset pattern/URL rather than
+  hardcoding `x86_64`/`amd64` — this is what lets `install.sh` run
+  unmodified on Oracle Cloud's free arm64 Ampere A1 tier
+  (`docs/ORACLE-FREE-TIER.md`, `cloud/oracle/`).
 - **Nginx vhosts** are rendered from a single template
   (`config/nginx/reverse-proxy.conf.template`) via placeholder
   substitution in `scripts/12-nginx-certbot.sh`'s `render_vhost`

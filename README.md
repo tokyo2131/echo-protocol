@@ -8,7 +8,10 @@ application. See `docs/ARCHITECTURE.md` for the full picture.
 
 ## Quick start
 
-On a fresh Debian 12 x86_64 droplet:
+On a fresh Debian 12 server (amd64 or arm64 — a DigitalOcean droplet, a
+Compute Engine VM, or a genuinely-free Oracle Cloud Ampere A1 instance;
+see `docs/ORACLE-FREE-TIER.md` if you don't have a server yet and want
+one for $0/month):
 
 ```
 git clone <this-repo-url> ~/projects/echo-protocol
@@ -58,6 +61,7 @@ automation layer via systemd timers. Full list:
 | `docs/MAINTENANCE.md` | Automated timers + manual maintenance commands |
 | `docs/VALIDATION-CHECKLIST.md` | Automated + manual post-install verification |
 | `docs/TROUBLESHOOTING.md` | Common failure modes and fixes |
+| `docs/ORACLE-FREE-TIER.md` | Running this on Oracle Cloud's genuinely-free Ampere A1 tier instead of a paid droplet |
 
 ## Automatic deployments for an application
 

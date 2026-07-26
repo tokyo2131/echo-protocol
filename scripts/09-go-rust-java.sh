@@ -7,6 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT_DIR}/scripts/lib/common.sh"
 require_root
 require_env ADMIN_USER
+detect_arch
 
 step "Install Go (latest stable) system-wide under /usr/local/go"
 GO_LATEST=$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n1)
@@ -14,7 +15,7 @@ if [[ -x /usr/local/go/bin/go && "$(/usr/local/go/bin/go version | awk '{print $
   log "Go ${GO_LATEST} already installed."
 else
   tmp=$(mktemp -d)
-  curl -fsSL "https://go.dev/dl/${GO_LATEST}.linux-amd64.tar.gz" -o "${tmp}/go.tar.gz"
+  curl -fsSL "https://go.dev/dl/${GO_LATEST}.linux-${GO_ARCH}.tar.gz" -o "${tmp}/go.tar.gz"
   rm -rf /usr/local/go
   tar -C /usr/local -xzf "${tmp}/go.tar.gz"
   rm -rf "$tmp"
