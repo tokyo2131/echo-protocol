@@ -25,8 +25,8 @@ directory tree. Exits non-zero if anything FAILs.
       with a password prompt
 - [ ] From an unauthorized IP, `nmap -Pn <host>` (or similar) shows only
       22/80/443 open
-- [ ] Visiting `https://<PRIMARY_DOMAIN>` and
-      `https://<RUFLO_DOMAIN>` in a browser shows a valid, trusted
+- [ ] Visiting `https://<PRIMARY_DOMAIN>`, `https://<RUFLO_DOMAIN>`, and
+      `https://<MCP_CLAUDE_DOMAIN>` in a browser shows a valid, trusted
       certificate (not just that Certbot ran without error — DNS has to
       actually be pointed at this droplet first)
 - [ ] `sudo -u <admin> docker run hello-world` works without `sudo`

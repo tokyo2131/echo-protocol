@@ -56,6 +56,15 @@ demonstrates:
 2. `nginx -t && systemctl reload nginx`
 3. `certbot --nginx -d <domain>`
 
+**Streaming/long-lived connections**: the shared template's
+`proxy_read_timeout 60s` is fine for ordinary request/response APIs, but
+`mcp-claude` (an MCP server using streamable-HTTP, which can hold a
+connection open for a server-sent-event stream or a long-running tool
+call) may need a longer timeout once it has real tools to call. If you
+hit connections dropping mid-call, raise `proxy_read_timeout` for that
+vhost specifically rather than for every fronted project — don't change
+the shared template for one service's needs.
+
 ## Backups
 
 Docker named volumes are backed up whole (tar, via a throwaway `alpine`

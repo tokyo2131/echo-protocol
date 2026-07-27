@@ -77,6 +77,15 @@ already has a vhost slot rendered (`RUFLO_DOMAIN`) — no further specifics
 about Ruflo were available at provisioning time, so this repo only
 allocates the placeholder infrastructure for it.
 
+A third vhost slot (`MCP_CLAUDE_DOMAIN`, port 8000) is rendered for the
+`mcp-claude` MCP server ([tokyo2131/mcp-claude](https://github.com/tokyo2131/mcp-claude)) —
+unlike Ruflo, it follows the standard `~/docker/<project>/` convention
+rather than getting its own dedicated home directory, since it's a
+regular Dockerized service, not something the original spec called out
+by name. As of provisioning time it's a minimal working scaffold (one
+placeholder tool/resource over streamable-HTTP) with its actual purpose
+still undecided — see that repo's README.
+
 ## Automation layer
 
 Stage 16 copies `automation/*.sh` to `~/scripts/automation/` and installs

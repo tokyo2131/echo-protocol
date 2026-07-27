@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stage 12: Nginx reverse proxy + Certbot/Let's Encrypt, with vhosts
-# scaffolded for PRIMARY_DOMAIN and RUFLO_DOMAIN. Certificate issuance
+# scaffolded for PRIMARY_DOMAIN, RUFLO_DOMAIN, and MCP_CLAUDE_DOMAIN.
+# Certificate issuance
 # is best-effort: if DNS doesn't yet point at this server, the HTTP
 # vhost is still installed so you can issue the cert later by re-running
 # this script (it's idempotent) once DNS propagates.
@@ -36,6 +37,7 @@ render_vhost() {
 step "Render vhosts"
 render_vhost "app" "${PRIMARY_DOMAIN}" "3000"
 render_vhost "ruflo" "${RUFLO_DOMAIN:-ruflo.${PRIMARY_DOMAIN}}" "3001"
+render_vhost "mcp-claude" "${MCP_CLAUDE_DOMAIN:-mcp-claude.${PRIMARY_DOMAIN}}" "8000"
 
 step "Validate and reload Nginx"
 nginx -t
@@ -60,6 +62,7 @@ issue_cert() {
 step "Issue TLS certificates (best-effort)"
 issue_cert "${PRIMARY_DOMAIN}"
 issue_cert "${RUFLO_DOMAIN:-ruflo.${PRIMARY_DOMAIN}}"
+issue_cert "${MCP_CLAUDE_DOMAIN:-mcp-claude.${PRIMARY_DOMAIN}}"
 
 step "Confirm Certbot auto-renewal timer is enabled"
 systemctl enable --now certbot.timer
