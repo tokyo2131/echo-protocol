@@ -36,6 +36,13 @@ if [[ "$SSH_PORT" != "22" ]]; then
 fi
 
 step "Validate sshd configuration"
+# /run/sshd is normally created by systemd when the ssh service starts
+# (via the unit's RuntimeDirectory=), but we're checking config syntax
+# before ever starting it under our control — without this, `sshd -t`
+# fails on a fresh instance with "Missing privilege separation
+# directory: /run/sshd" and, under set -e, silently kills the rest of
+# this install.
+install -d -m 0755 /run/sshd
 sshd -t
 
 step "Enable and restart sshd"
