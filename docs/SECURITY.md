@@ -40,10 +40,19 @@ checklist to tick through manually.
 
 ## Application-layer
 
-- **TLS** (`scripts/12-nginx-certbot.sh`, `config/nginx/ssl-params.conf`):
-  TLSv1.2+ only, modern cipher suites, HSTS, OCSP stapling,
-  `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy` headers on
-  every vhost. Certificates auto-renew via `certbot.timer`.
+- **TLS** (`scripts/12-nginx-certbot.sh`): vhosts render HTTP-only —
+  Certbot's own Nginx plugin adds the HTTPS server block itself once a
+  certificate is actually issued (TLSv1.2+, modern ciphers, dhparams —
+  see `/etc/letsencrypt/options-ssl-nginx.conf` on the host), rather
+  than this repo pre-writing a `listen 443 ssl` block with no
+  certificate to point at (invalid config — nginx refuses to start at
+  all, for every vhost, not just the affected one). Certificates
+  auto-renew via `certbot.timer`.
+- **Security headers** (`config/nginx/hardening.conf`, loaded globally
+  for every vhost): HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`. Applied at the `http{}` level rather than per-vhost
+  so they're already active on the HTTP-only vhost and stay active once
+  Certbot adds the HTTPS block.
 - **Docker** (`scripts/10-docker.sh`, `config/docker/daemon.json`):
   `no-new-privileges` by default, app/db ports bound to `127.0.0.1` only
   in the example compose file (never directly internet-reachable — UFW
