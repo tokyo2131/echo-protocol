@@ -84,6 +84,27 @@ detect_arch() {
   export DPKG_ARCH RUST_TARGET_ARCH GO_ARCH FASTFETCH_ARCH
 }
 
+# --- OS helpers ------------------------------------------------------
+# Primary target is Debian 12 (Bookworm). Ubuntu 24.04 LTS (Noble) is
+# supported as a fallback for hosts where Debian isn't offered as a
+# platform image (this has been observed for Oracle Cloud's A1.Flex
+# shape in some regions/tenancies) — apt/systemd/UFW are the same
+# across both, but a handful of things genuinely differ per-distro
+# (backports repo naming, unattended-upgrades' security-pocket origin
+# match, Docker's per-distro apt repo path). Stages that touch any of
+# those should call detect_os and branch on $DISTRO_ID rather than
+# hardcoding "debian".
+detect_os() {
+  . /etc/os-release
+  DISTRO_ID="$ID"                 # "debian" | "ubuntu"
+  DISTRO_CODENAME="$VERSION_CODENAME"   # "bookworm" | "noble"
+  case "$DISTRO_ID" in
+    debian|ubuntu) ;;
+    *) die "Unsupported distro '${DISTRO_ID}' — this repo supports Debian and Ubuntu only." ;;
+  esac
+  export DISTRO_ID DISTRO_CODENAME
+}
+
 # --- misc --------------------------------------------------------------
 confirm_or_die() {
   # Used by destructive automation scripts (restore.sh) when run interactively.

@@ -1,32 +1,38 @@
 #!/usr/bin/env bash
 # Stage 07: Python toolchain. Debian 12 (Bookworm) ships Python 3.11 in
-# its main repo; Python 3.12 is available via bookworm-backports. We
-# prefer 3.12 and fall back to the in-repo 3.11 if backports is
-# unavailable (e.g. a mirror lagging behind). Global CLI tools are
-# installed with pipx, since Debian marks the system Python as
-# "externally managed" (PEP 668) and `pip install` at system scope is
-# deliberately blocked.
+# its main repo; Python 3.12 is available via bookworm-backports. Ubuntu
+# 24.04 LTS (Noble) ships Python 3.12 directly, no backports needed. We
+# prefer 3.12 and fall back to the in-repo default if it's unavailable
+# (e.g. a mirror lagging behind, or an older Ubuntu release). Global CLI
+# tools are installed with pipx, since both distros mark the system
+# Python as "externally managed" (PEP 668) and `pip install` at system
+# scope is deliberately blocked.
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/lib/common.sh"
 require_root
 require_env ADMIN_USER
+detect_os
 
-step "Enable bookworm-backports"
-if [[ ! -f /etc/apt/sources.list.d/bookworm-backports.list ]]; then
-  echo "deb http://deb.debian.org/debian bookworm-backports main" \
-    > /etc/apt/sources.list.d/bookworm-backports.list
+APT_TARGET_RELEASE=()
+if [[ "$DISTRO_ID" == "debian" ]]; then
+  step "Enable bookworm-backports"
+  if [[ ! -f /etc/apt/sources.list.d/bookworm-backports.list ]]; then
+    echo "deb http://deb.debian.org/debian bookworm-backports main" \
+      > /etc/apt/sources.list.d/bookworm-backports.list
+  fi
+  APT_TARGET_RELEASE=(-t bookworm-backports)
 fi
 apt_update
 
-step "Install Python 3.12 (falls back to distro default python3 if backports lacks it)"
+step "Install Python 3.12 (falls back to distro default python3 if unavailable)"
 if apt-cache show python3.12 &>/dev/null; then
-  apt_install -t bookworm-backports python3.12 python3.12-venv python3.12-dev
+  apt_install "${APT_TARGET_RELEASE[@]}" python3.12 python3.12-venv python3.12-dev
   update-alternatives --install /usr/bin/python3 python3 "$(command -v python3.12)" 1
   PY_BIN=python3.12
 else
-  warn "python3.12 not available from backports on this mirror; using distro python3."
+  warn "python3.12 not available on this mirror/release; using distro python3."
   apt_install python3 python3-venv python3-dev
   PY_BIN=python3
 fi

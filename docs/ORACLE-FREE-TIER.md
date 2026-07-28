@@ -74,17 +74,22 @@ Things that measurably help alongside the retry script:
 3. Gather the IDs the retry script needs (compartment, availability
    domains, subnet, image) — the exact `oci` commands for each are
    commented inline in `cloud/oracle/.env.example`.
-4. **Debian image availability**: Oracle lists Debian as a platform
-   image in most regions/tenancies. Confirm with:
+4. **Debian image availability**: not guaranteed — confirmed absent for
+   at least one real tenancy/region (`uk-london-1`, A1.Flex shape) during
+   testing. Confirm for yours with:
    ```
    oci compute image list --compartment-id <compartment-ocid> \
      --operating-system Debian --shape VM.Standard.A1.Flex
    ```
-   If nothing comes back for your tenancy/region, you'd need to import a
-   Debian 12 arm64 cloud image as a custom image first (Oracle supports
-   custom image import from a QCOW2/VMDK in Object Storage) — out of
-   scope for this doc; Oracle's own "Importing a Custom Linux Image"
-   guide covers it.
+   If nothing comes back, **use Ubuntu 24.04 LTS (Noble) instead** —
+   `install.sh` supports it natively (see `docs/ARCHITECTURE.md` "Distro
+   is likewise auto-detected"), no config needed beyond picking it as the
+   image. It's virtually always available. Importing a genuine Debian 12
+   arm64 image as a custom image (Oracle supports import from a
+   QCOW2/VMDK in Object Storage) is possible but real friction for
+   little benefit now that Ubuntu is a first-class supported target —
+   only worth it if you specifically need Debian over Ubuntu for some
+   other reason.
 5. ```
    cp cloud/oracle/.env.example cloud/oracle/.env
    vim cloud/oracle/.env

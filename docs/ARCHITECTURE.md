@@ -12,7 +12,7 @@ development.
 
 | | |
 |---|---|
-| OS | Debian 12 (Bookworm), amd64 (x86_64) or arm64 (aarch64) |
+| OS | Debian 12 (Bookworm) primary; Ubuntu 24.04 LTS (Noble) supported as a fallback — amd64 (x86_64) or arm64 (aarch64) |
 | Sizing assumed by tuning defaults | 4 vCPU / 8 GB RAM / 100 GB NVMe (or larger — e.g. Oracle Cloud's Always Free Ampere A1 offers up to 4 OCPU/24GB/200GB free; see `docs/ORACLE-FREE-TIER.md`) |
 | Network | Public static IPv4, IPv6 enabled |
 | Exposed ports | 22 (SSH), 80 (HTTP), 443 (HTTPS) — everything else denied by UFW |
@@ -22,6 +22,19 @@ Architecture is auto-detected (`scripts/lib/common.sh`'s `detect_arch`)
 (eza/zoxide/fastfetch in stage 06, Go in stage 09) resolve the correct
 amd64/arm64 asset at install time rather than hardcoding one. Every
 apt-installed package already ships both architectures upstream.
+
+Distro is likewise auto-detected (`detect_os`, sets `$DISTRO_ID`/
+`$DISTRO_CODENAME`) — Debian is primary, but Ubuntu 24.04 LTS is a real
+fallback for hosts where Debian isn't offered as a platform image (seen
+in practice: Oracle Cloud's A1.Flex shape, some regions/tenancies).
+Three stages branch on distro rather than assuming Debian:
+`00-bootstrap.sh` (unattended-upgrades' security-pocket origin match —
+Debian and Ubuntu tag security updates differently), `07-python.sh`
+(Debian needs `bookworm-backports` for Python 3.12; Ubuntu 24.04 ships
+it directly), and `10-docker.sh` (Docker publishes a separate apt repo
+per distro). Everything else — UFW, Fail2Ban, AppArmor, Nginx, Postgres,
+Redis, the language toolchains beyond Python — is identical apt
+packages on both.
 
 ## Layered design
 
