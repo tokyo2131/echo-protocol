@@ -72,6 +72,16 @@ skip_if_done() {
   return 1
 }
 
+# Ubuntu's needrestart package prompts interactively ("which services
+# should be restarted?") on certain installs/upgrades — independent of
+# DEBIAN_FRONTEND=noninteractive, which does NOT suppress it. Left
+# unset, this hangs any apt operation indefinitely in a non-interactive
+# session (confirmed live: install.sh hung here on a real run). 'a'
+# means restart automatically without asking. Exported globally here
+# since plenty of stages call apt-get directly (upgrade, dist-upgrade,
+# remove) rather than only through apt_install below.
+export NEEDRESTART_MODE=a
+
 # --- package helpers -------------------------------------------------------
 apt_install() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@"
