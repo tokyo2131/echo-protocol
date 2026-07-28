@@ -90,12 +90,19 @@ export NEEDRESTART_MODE=a
 # user even exists), and the newly-created admin user has no permission
 # to even stat into ubuntu's home directory — every bare `sudo -u
 # "$ADMIN_USER"` call failed with "Permission denied", regardless of
-# what the actual command was. --chdir moves sudo into the target
-# user's own home first, independent of wherever this script itself
-# was invoked from.
+# what the actual command was.
+#
+# The obvious fix, `sudo --chdir`, is itself blocked: sudo >=1.9.13
+# (what Ubuntu 24.04 ships) refuses `-D`/`--chdir` unless the sudoers
+# policy has an explicit CWD= spec granting it, which the default
+# sudoers file doesn't ("sudo: you are not permitted to use the -D
+# option with ..." — confirmed live). So instead of asking sudo to
+# change directory, let the shell that's already running as the admin
+# user cd itself once it's there — that only needs permission on the
+# admin user's own home, which they have.
 sudo_admin() {
   require_env ADMIN_USER
-  sudo -u "$ADMIN_USER" -H --chdir="/home/${ADMIN_USER}" "$@"
+  sudo -u "$ADMIN_USER" -H bash -c 'cd "$HOME" && exec "$@"' _ "$@"
 }
 
 # --- package helpers -------------------------------------------------------
