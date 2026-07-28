@@ -39,11 +39,11 @@ fi
 apt_install python3-pip pipx
 
 step "Ensure pipx is on PATH for all users and initialised for ${ADMIN_USER}"
-sudo -u "$ADMIN_USER" -H pipx ensurepath || true
+sudo_admin pipx ensurepath || true
 
 step "Install global Python dev tools via pipx (isolated venvs, PEP 668 safe)"
 for tool in black ruff pytest ipython jupyterlab; do
-  sudo -u "$ADMIN_USER" -H pipx install --force "$tool"
+  sudo_admin pipx install --force "$tool"
 done
 
 step "Confirm wheel/setuptools/virtualenv available for ad-hoc venvs"

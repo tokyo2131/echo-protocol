@@ -82,6 +82,22 @@ skip_if_done() {
 # remove) rather than only through apt_install below.
 export NEEDRESTART_MODE=a
 
+# --- run as the admin user ------------------------------------------------
+# `sudo -u` alone does NOT change the working directory — it inherits
+# wherever the calling script's cwd is. Confirmed live: install.sh run
+# from ~ubuntu/echo-protocol (the pre-existing cloud-init user's home,
+# since that's naturally where the repo gets cloned before the admin
+# user even exists), and the newly-created admin user has no permission
+# to even stat into ubuntu's home directory — every bare `sudo -u
+# "$ADMIN_USER"` call failed with "Permission denied", regardless of
+# what the actual command was. --chdir moves sudo into the target
+# user's own home first, independent of wherever this script itself
+# was invoked from.
+sudo_admin() {
+  require_env ADMIN_USER
+  sudo -u "$ADMIN_USER" -H --chdir="/home/${ADMIN_USER}" "$@"
+}
+
 # --- package helpers -------------------------------------------------------
 apt_install() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@"

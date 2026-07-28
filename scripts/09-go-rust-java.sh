@@ -29,11 +29,11 @@ chmod 644 /etc/profile.d/golang.sh
 step "Install Rust (rustup, stable toolchain) for ${ADMIN_USER}"
 ADMIN_HOME="/home/${ADMIN_USER}"
 if [[ ! -x "${ADMIN_HOME}/.cargo/bin/rustc" ]]; then
-  sudo -u "$ADMIN_USER" -H bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
+  sudo_admin bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'
 else
   log "Rust already installed for ${ADMIN_USER}."
 fi
-sudo -u "$ADMIN_USER" -H bash -c "source \$HOME/.cargo/env && rustc --version" | tee -a "$LOG_FILE"
+sudo_admin bash -c "source \$HOME/.cargo/env && rustc --version" | tee -a "$LOG_FILE"
 
 step "Install OpenJDK 21"
 apt_install openjdk-21-jdk-headless

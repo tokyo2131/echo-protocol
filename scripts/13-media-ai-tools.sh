@@ -26,7 +26,7 @@ if ! command -v gh &>/dev/null; then
 fi
 
 step "Initialise Git LFS for ${ADMIN_USER}"
-sudo -u "$ADMIN_USER" -H git lfs install --skip-repo
+sudo_admin git lfs install --skip-repo
 
 gh --version | tee -a "$LOG_FILE"
 ffmpeg -version | head -n1 | tee -a "$LOG_FILE"
