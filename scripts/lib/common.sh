@@ -4,6 +4,24 @@
 
 set -euo pipefail
 
+# --- auto-load .env -----------------------------------------------------
+# install.sh sources .env itself before invoking a stage as a subprocess,
+# so its exported vars are already present by the time this runs there.
+# But docs (README.md, docs/MAINTENANCE.md) also document running a
+# stage directly — "sudo ./scripts/10-docker.sh" — and without this,
+# that path fails on the first require_env call since nothing ever
+# sourced .env. Idempotent either way: re-sourcing already-exported vars
+# here is harmless.
+_COMMON_SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_REPO_ROOT="$(cd "${_COMMON_SH_DIR}/../.." && pwd)"
+if [[ -f "${_REPO_ROOT}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${_REPO_ROOT}/.env"
+  set +a
+fi
+unset _COMMON_SH_DIR _REPO_ROOT
+
 # --- logging -----------------------------------------------------------
 LOG_DIR="${LOG_DIR:-/var/log/echo-protocol}"
 LOG_FILE="${LOG_FILE:-${LOG_DIR}/provision.log}"
