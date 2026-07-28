@@ -30,10 +30,17 @@ install_github_release() {
     log "${binary_name} already installed, skipping."
     return
   fi
-  local tag url tmp
-  tag=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | jq -r .tag_name)
-  url=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
-    | jq -r ".assets[] | select(.name | test(\"${asset_pattern}\")) | .browser_download_url" | head -n1)
+  local tag url tmp release_json
+  release_json=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest")
+  tag=$(jq -r .tag_name <<<"$release_json")
+  # --arg passes asset_pattern as a jq string value rather than
+  # interpolating it into the program text — avoids fights between
+  # bash's backslash-escaping and jq's own JSON-string-escaping rules
+  # (a literal "\." in the interpolated form is not a valid jq string
+  # escape and fails to parse).
+  url=$(jq -r --arg pattern "$asset_pattern" \
+    '.assets[] | select(.name | test($pattern)) | .browser_download_url' \
+    <<<"$release_json" | head -n1)
   [[ -n "$url" && "$url" != "null" ]] || { warn "Could not resolve release asset for ${repo} (${asset_pattern}); skipping."; return; }
   tmp=$(mktemp -d)
   log "Installing ${binary_name} ${tag} from ${repo}"
