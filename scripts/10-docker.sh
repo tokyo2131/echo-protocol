@@ -6,6 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT_DIR}/scripts/lib/common.sh"
 require_root
 require_env ADMIN_USER
+detect_os
 
 step "Remove any conflicting distro Docker packages"
 for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
@@ -15,13 +16,12 @@ done
 step "Add Docker's official GPG key and apt repository"
 install -m 0755 -d /etc/apt/keyrings
 if [[ ! -f /etc/apt/keyrings/docker.asc ]]; then
-  curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+  curl -fsSL "https://download.docker.com/linux/${DISTRO_ID}/gpg" -o /etc/apt/keyrings/docker.asc
   chmod a+r /etc/apt/keyrings/docker.asc
 fi
 ARCH=$(dpkg --print-architecture)
-CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
 cat >/etc/apt/sources.list.d/docker.list <<EOF
-deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${CODENAME} stable
+deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${DISTRO_ID} ${DISTRO_CODENAME} stable
 EOF
 
 step "Install Docker Engine, CLI, containerd, Buildx, Compose plugin"

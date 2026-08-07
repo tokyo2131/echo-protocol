@@ -1,17 +1,19 @@
 # echo-protocol
 
-Provisioning codebase for a production-ready Debian 12 (Bookworm)
-server: security hardening, Docker, language runtimes, databases, an
-Nginx/Certbot reverse proxy, automated daily backups, and monitoring.
-This repo *produces* the server configuration — it doesn't contain an
-application. See `docs/ARCHITECTURE.md` for the full picture.
+Provisioning codebase for a production-ready Debian 12 (Bookworm) —
+or Ubuntu 24.04 LTS, see below — server: security hardening, Docker,
+language runtimes, databases, an Nginx/Certbot reverse proxy, automated
+daily backups, and monitoring. This repo *produces* the server
+configuration — it doesn't contain an application. See
+`docs/ARCHITECTURE.md` for the full picture.
 
 ## Quick start
 
-On a fresh Debian 12 server (amd64 or arm64 — a DigitalOcean droplet, a
-Compute Engine VM, or a genuinely-free Oracle Cloud Ampere A1 instance;
-see `docs/ORACLE-FREE-TIER.md` if you don't have a server yet and want
-one for $0/month):
+On a fresh Debian 12 **or Ubuntu 24.04 LTS** server (amd64 or arm64 — a
+DigitalOcean droplet, a Compute Engine VM, or a genuinely-free Oracle
+Cloud Ampere A1 instance; see `docs/ORACLE-FREE-TIER.md` if you don't
+have a server yet and want one for $0/month — and note Debian isn't
+always offered as a platform image there, Ubuntu 24.04 is the fallback):
 
 ```
 git clone <this-repo-url> ~/projects/echo-protocol

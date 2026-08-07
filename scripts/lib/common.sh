@@ -4,6 +4,24 @@
 
 set -euo pipefail
 
+# --- auto-load .env -----------------------------------------------------
+# install.sh sources .env itself before invoking a stage as a subprocess,
+# so its exported vars are already present by the time this runs there.
+# But docs (README.md, docs/MAINTENANCE.md) also document running a
+# stage directly — "sudo ./scripts/10-docker.sh" — and without this,
+# that path fails on the first require_env call since nothing ever
+# sourced .env. Idempotent either way: re-sourcing already-exported vars
+# here is harmless.
+_COMMON_SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_REPO_ROOT="$(cd "${_COMMON_SH_DIR}/../.." && pwd)"
+if [[ -f "${_REPO_ROOT}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${_REPO_ROOT}/.env"
+  set +a
+fi
+unset _COMMON_SH_DIR _REPO_ROOT
+
 # --- logging -----------------------------------------------------------
 LOG_DIR="${LOG_DIR:-/var/log/echo-protocol}"
 LOG_FILE="${LOG_FILE:-${LOG_DIR}/provision.log}"
@@ -54,6 +72,39 @@ skip_if_done() {
   return 1
 }
 
+# Ubuntu's needrestart package prompts interactively ("which services
+# should be restarted?") on certain installs/upgrades — independent of
+# DEBIAN_FRONTEND=noninteractive, which does NOT suppress it. Left
+# unset, this hangs any apt operation indefinitely in a non-interactive
+# session (confirmed live: install.sh hung here on a real run). 'a'
+# means restart automatically without asking. Exported globally here
+# since plenty of stages call apt-get directly (upgrade, dist-upgrade,
+# remove) rather than only through apt_install below.
+export NEEDRESTART_MODE=a
+
+# --- run as the admin user ------------------------------------------------
+# `sudo -u` alone does NOT change the working directory — it inherits
+# wherever the calling script's cwd is. Confirmed live: install.sh run
+# from ~ubuntu/echo-protocol (the pre-existing cloud-init user's home,
+# since that's naturally where the repo gets cloned before the admin
+# user even exists), and the newly-created admin user has no permission
+# to even stat into ubuntu's home directory — every bare `sudo -u
+# "$ADMIN_USER"` call failed with "Permission denied", regardless of
+# what the actual command was.
+#
+# The obvious fix, `sudo --chdir`, is itself blocked: sudo >=1.9.13
+# (what Ubuntu 24.04 ships) refuses `-D`/`--chdir` unless the sudoers
+# policy has an explicit CWD= spec granting it, which the default
+# sudoers file doesn't ("sudo: you are not permitted to use the -D
+# option with ..." — confirmed live). So instead of asking sudo to
+# change directory, let the shell that's already running as the admin
+# user cd itself once it's there — that only needs permission on the
+# admin user's own home, which they have.
+sudo_admin() {
+  require_env ADMIN_USER
+  sudo -u "$ADMIN_USER" -H bash -c 'cd "$HOME" && exec "$@"' _ "$@"
+}
+
 # --- package helpers -------------------------------------------------------
 apt_install() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@"
@@ -82,6 +133,27 @@ detect_arch() {
     *) die "Unsupported architecture '${DPKG_ARCH}' — this repo supports amd64 and arm64 only." ;;
   esac
   export DPKG_ARCH RUST_TARGET_ARCH GO_ARCH FASTFETCH_ARCH
+}
+
+# --- OS helpers ------------------------------------------------------
+# Primary target is Debian 12 (Bookworm). Ubuntu 24.04 LTS (Noble) is
+# supported as a fallback for hosts where Debian isn't offered as a
+# platform image (this has been observed for Oracle Cloud's A1.Flex
+# shape in some regions/tenancies) — apt/systemd/UFW are the same
+# across both, but a handful of things genuinely differ per-distro
+# (backports repo naming, unattended-upgrades' security-pocket origin
+# match, Docker's per-distro apt repo path). Stages that touch any of
+# those should call detect_os and branch on $DISTRO_ID rather than
+# hardcoding "debian".
+detect_os() {
+  . /etc/os-release
+  DISTRO_ID="$ID"                 # "debian" | "ubuntu"
+  DISTRO_CODENAME="$VERSION_CODENAME"   # "bookworm" | "noble"
+  case "$DISTRO_ID" in
+    debian|ubuntu) ;;
+    *) die "Unsupported distro '${DISTRO_ID}' — this repo supports Debian and Ubuntu only." ;;
+  esac
+  export DISTRO_ID DISTRO_CODENAME
 }
 
 # --- misc --------------------------------------------------------------

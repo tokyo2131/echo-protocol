@@ -55,7 +55,12 @@ apt_install redis-server
 step "Secure Redis: bind to localhost, require password, disable dangerous commands"
 REDIS_CONF=/etc/redis/redis.conf
 sed -i "s/^bind .*/bind 127.0.0.1 -::1/" "$REDIS_CONF"
-sed -i "s/^# requirepass .*/requirepass ${REDIS_PASSWORD}/; s/^requirepass .*/requirepass ${REDIS_PASSWORD}/" "$REDIS_CONF"
+# | delimiter, not / — REDIS_PASSWORD is base64-generated and can
+# legitimately contain a literal "/", which would otherwise be parsed
+# as the end of the sed expression (confirmed live: "sed: -e expression
+# #1, char 65: unknown option to `s'" whenever a generated password
+# happened to contain one).
+sed -i "s|^# requirepass .*|requirepass ${REDIS_PASSWORD}|; s|^requirepass .*|requirepass ${REDIS_PASSWORD}|" "$REDIS_CONF"
 grep -q '^requirepass' "$REDIS_CONF" || echo "requirepass ${REDIS_PASSWORD}" >> "$REDIS_CONF"
 sed -i "s/^supervised .*/supervised systemd/" "$REDIS_CONF"
 # FLUSHALL/FLUSHDB/DEBUG disabled outright. CONFIG is left enabled since

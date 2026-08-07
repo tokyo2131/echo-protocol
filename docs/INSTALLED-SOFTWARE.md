@@ -37,6 +37,15 @@ release asset for eza/zoxide/fastfetch (stage 06) and Go (stage 09);
 apt packages are multi-arch already. See `docs/ORACLE-FREE-TIER.md` for
 running on Oracle Cloud's free arm64 (Ampere A1) tier.
 
+## OS support
+
+Debian 12 (Bookworm) is primary; Ubuntu 24.04 LTS (Noble) is also
+supported — needed in practice, since Debian isn't offered as a platform
+image in every Oracle Cloud region/tenancy. `detect_os` branches the
+handful of genuinely distro-specific bits (Python 3.12's repo,
+unattended-upgrades' security-pocket match, Docker's apt repo path);
+everything else is identical apt packages either way.
+
 ## Version policy
 
 - Packages from Debian's apt repos track whatever Bookworm/

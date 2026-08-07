@@ -5,7 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repository is
 
 `echo-protocol` is infrastructure-as-code for provisioning a Debian 12
-(Bookworm) server — it does not contain an application. Running
+(Bookworm) server — Ubuntu 24.04 LTS (Noble) is also supported, as a
+fallback for hosts that don't offer Debian as a platform image (Oracle
+Cloud's A1.Flex shape, notably) — it does not contain an application. Running
 `install.sh` against a fresh droplet turns it into a hardened host ready
 for Docker workloads, PostgreSQL/Redis, an Nginx/Certbot reverse proxy,
 and automated backups/monitoring. There is no build step, no test
@@ -100,6 +102,15 @@ Full detail lives in `docs/ARCHITECTURE.md` and `docs/DIRECTORY-STRUCTURE.md`
   hardcoding `x86_64`/`amd64` — this is what lets `install.sh` run
   unmodified on Oracle Cloud's free arm64 Ampere A1 tier
   (`docs/ORACLE-FREE-TIER.md`, `cloud/oracle/`).
+- **Distro**: Debian is primary, Ubuntu 24.04 LTS is a supported
+  fallback (needed in practice: Oracle Cloud doesn't offer Debian as a
+  platform image in every region/tenancy). Stages with a genuinely
+  distro-specific step call `detect_os` (`scripts/lib/common.sh`, sets
+  `$DISTRO_ID`/`$DISTRO_CODENAME`) and branch — see `00-bootstrap.sh`
+  (unattended-upgrades origin match), `07-python.sh` (backports),
+  `10-docker.sh` (Docker's per-distro apt repo). Don't hardcode
+  `debian`/`bookworm` in a new stage without checking whether it
+  actually needs to branch on `$DISTRO_ID` instead.
 - **Nginx vhosts** are rendered from a single template
   (`config/nginx/reverse-proxy.conf.template`) via placeholder
   substitution in `scripts/12-nginx-certbot.sh`'s `render_vhost`

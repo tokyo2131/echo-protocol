@@ -8,6 +8,20 @@
 set -uo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Deliberately doesn't source common.sh (it sets -e, which would abort
+# this whole report on the first failed check instead of tallying every
+# one). But that means .env — specifically $ADMIN_USER, used below to
+# check ~ben's directories/files — is never loaded unless we do it here.
+# Confirmed live: run via `sudo ./scripts/99-validate.sh`, ADMIN_USER was
+# unset, every check silently fell back to the "deploy" default and
+# reported the admin user's real directories/files as missing.
+if [[ -f "${ROOT_DIR}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT_DIR}/.env"
+  set +a
+fi
+
 PASS=0
 FAIL=0
 WARN=0

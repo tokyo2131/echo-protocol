@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Stage 12: Nginx reverse proxy + Certbot/Let's Encrypt, with vhosts
 # scaffolded for PRIMARY_DOMAIN, RUFLO_DOMAIN, and MCP_CLAUDE_DOMAIN.
-# Certificate issuance
-# is best-effort: if DNS doesn't yet point at this server, the HTTP
-# vhost is still installed so you can issue the cert later by re-running
-# this script (it's idempotent) once DNS propagates.
+# Certificate issuance is best-effort: if DNS doesn't yet point at this
+# server (or the domain is still a placeholder), the rendered vhost is
+# plain HTTP and stays that way — see
+# config/nginx/reverse-proxy.conf.template for why it's deliberately
+# not pre-written with a listen-443 block. Re-run this script (it's
+# idempotent) once DNS is live to pick up real certificates.
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
@@ -16,9 +18,7 @@ require_env CERTBOT_EMAIL
 step "Install Nginx and Certbot"
 apt_install nginx certbot python3-certbot-nginx
 
-step "Install hardening + TLS snippets"
-install -d /etc/nginx/snippets
-install -m 644 "${ROOT_DIR}/config/nginx/ssl-params.conf" /etc/nginx/snippets/ssl-params.conf
+step "Install hardening snippet"
 install -m 644 "${ROOT_DIR}/config/nginx/hardening.conf" /etc/nginx/conf.d/00-hardening.conf
 install -d -m 755 /var/www/certbot
 

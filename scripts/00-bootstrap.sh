@@ -7,6 +7,8 @@ source "${ROOT_DIR}/scripts/lib/common.sh"
 require_root
 require_env ADMIN_USER
 require_env ADMIN_SSH_PUBKEY
+detect_os
+log "Distro: ${DISTRO_ID} ${DISTRO_CODENAME}"
 
 step "Full system update"
 apt_update
@@ -16,7 +18,27 @@ apt_install ca-certificates gnupg lsb-release
 
 step "Configure automatic security updates (unattended-upgrades)"
 apt_install unattended-upgrades apt-listchanges
-cat >/etc/apt/apt.conf.d/50unattended-upgrades.local <<'EOF'
+# Clean up the old filename from before this was fixed — APT's conf.d
+# parser silently ignores unrecognized extensions like ".local", so it
+# was never actually being read.
+rm -f /etc/apt/apt.conf.d/50unattended-upgrades.local
+if [[ "$DISTRO_ID" == "ubuntu" ]]; then
+  # Ubuntu's security pocket sets Origin: Ubuntu with no Debian-style
+  # Label field — "${distro_id}:${distro_codename}-security" is the
+  # standard pattern Ubuntu's own default config ships with, and
+  # unattended-upgrades resolves both placeholders itself from
+  # /etc/os-release, so this is portable across Ubuntu releases as-is.
+  cat >/etc/apt/apt.conf.d/51unattended-upgrades-echo-protocol <<'EOF'
+// Managed by echo-protocol scripts/00-bootstrap.sh
+Unattended-Upgrade::Origins-Pattern {
+        "${distro_id}:${distro_codename}-security";
+};
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::SyslogEnable "true";
+EOF
+else
+  cat >/etc/apt/apt.conf.d/51unattended-upgrades-echo-protocol <<'EOF'
 // Managed by echo-protocol scripts/00-bootstrap.sh
 Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename},label=Debian-Security";
@@ -26,6 +48,7 @@ Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "false";
 Unattended-Upgrade::SyslogEnable "true";
 EOF
+fi
 cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Download-Upgradeable-Packages "1";
