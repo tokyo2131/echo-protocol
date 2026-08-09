@@ -118,6 +118,41 @@ Full detail lives in `docs/ARCHITECTURE.md` and `docs/DIRECTORY-STRUCTURE.md`
   `render_vhost` call there (or rendering the template manually), not
   writing a new vhost file from scratch.
 
+## Ubuntu 24.04 fallback support
+
+Debian 12 (Bookworm) is the primary target; Ubuntu 24.04 LTS (Noble) is
+a supported fallback for hosts that don't offer Debian as a platform
+image — encountered in practice on Oracle Cloud's A1.Flex shape, which
+doesn't list Debian in every region/tenancy. apt/systemd/UFW behave the
+same on both, so most stages need no distro awareness at all. A handful
+of things genuinely differ per-distro and are branched explicitly:
+
+- **`detect_os`** (`scripts/lib/common.sh`) sources `/etc/os-release`
+  and sets `$DISTRO_ID` (`debian`|`ubuntu`) and `$DISTRO_CODENAME`
+  (`bookworm`|`noble`), `die`-ing on anything else. Any stage that needs
+  either value calls `detect_os` itself first — it isn't called
+  automatically by `common.sh`.
+- **`00-bootstrap.sh`** — unattended-upgrades' security-pocket origin
+  match differs: Debian's stanza names `bookworm-security` explicitly,
+  while Ubuntu's security pocket has no Debian-style `Label` field, so
+  it needs the generic `"${distro_id}:${distro_codename}-security"`
+  pattern instead (resolved by unattended-upgrades itself from
+  `/etc/os-release`, so it's portable across future Ubuntu releases
+  unmodified).
+- **`07-python.sh`** — Debian 12 ships Python 3.11 in its main repo, so
+  3.12 requires enabling `bookworm-backports`; Ubuntu 24.04 ships 3.12
+  directly and skips the backports step entirely. Both fall back to the
+  distro-default `python3` if 3.12 isn't available on the mirror.
+- **`10-docker.sh`** — Docker's official apt repo is per-distro
+  (`download.docker.com/linux/${DISTRO_ID}`, keyed to
+  `$DISTRO_CODENAME`), so both variables come from `detect_os` rather
+  than being hardcoded to `debian`/`bookworm`.
+
+When adding a new stage, don't hardcode `debian`/`bookworm` if the step
+touches an apt repo, a distro-specific package name, or anything else
+that could plausibly differ on Ubuntu — call `detect_os` and branch on
+`$DISTRO_ID` instead, following the pattern above.
+
 ## Conventions to follow when editing
 
 - Every `scripts/*.sh` stage: `set -euo pipefail`, source
